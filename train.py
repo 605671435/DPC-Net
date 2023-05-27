@@ -90,13 +90,6 @@ def main():
     # resume training
     cfg.resume = args.resume
 
-    # re-login wandb if cfg.wandb_keys exists
-    if cfg.wandb_keys:
-        if osp.exists(cfg.wandb_keys.dir):
-            import json
-            with open(cfg.wandb_keys.dir) as fp:
-                os.environ["WANDB_API_KEY"] = json.loads(fp.read())[cfg.wandb_keys.name]
-
     # cfg.train_cfg.max_iters = 50
     # cfg.train_cfg.val_interval = 50
 

@@ -14,7 +14,7 @@ def readme():
     return content
 
 
-version_file = 'mmseg/version.py'
+version_file = 'seg/version.py'
 
 
 def get_version():
@@ -125,7 +125,7 @@ def add_mim_extension():
 
     filenames = ['tools', 'configs', 'model-index.yml']
     repo_path = osp.dirname(__file__)
-    mim_path = osp.join(repo_path, 'mmseg', '.mim')
+    mim_path = osp.join(repo_path, 'seg', '.mim')
     os.makedirs(mim_path, exist_ok=True)
 
     for filename in filenames:
@@ -167,7 +167,7 @@ def add_mim_extension():
 if __name__ == '__main__':
     add_mim_extension()
     setup(
-        name='mmsegmentation',
+        name='segmentation',
         version=get_version(),
         description='Open MMLab Semantic Segmentation Toolbox and Benchmark',
         long_description=readme(),

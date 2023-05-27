@@ -10,8 +10,8 @@ from mmseg.utils import (ConfigType, OptConfigType, OptMultiConfig,
                          OptSampleList, SampleList, add_prefix)
 from mmseg.models.segmentors.base import BaseSegmentor
 from mmseg.models.utils import resize
-from seg.structures.seg_data_sample import SegDataSample
-from seg.structures.pixel_data import PixelData
+from mmseg.structures.seg_data_sample import SegDataSample
+from mmengine.structures.pixel_data import PixelData
 
 @MODELS.register_module()
 class EncoderDecoder(BaseSegmentor):
