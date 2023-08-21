@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('config', help='train config file path')
     parser.add_argument(
         '--num-runs',
-        default=5,
+        default=2,
         type=int,
         help='The number of all runs.')
     parser.add_argument('--work-dir', help='the dir to save logs and models')
@@ -94,11 +94,11 @@ if __name__ == '__main__':
             cfg.optim_wrapper.loss_scale = 'dynamic'
 
     # re-login wandb if cfg.wandb_keys exists
-    if cfg.wandb_keys:
-        if osp.exists(cfg.wandb_keys.dir):
-            import json
-            with open(cfg.wandb_keys.dir) as fp:
-                os.environ["WANDB_API_KEY"] = json.loads(fp.read())[cfg.wandb_keys.name]
+    # if cfg.wandb_keys:
+    #     if osp.exists(cfg.wandb_keys.dir):
+    #         import json
+    #         with open(cfg.wandb_keys.dir) as fp:
+    #             os.environ["WANDB_API_KEY"] = json.loads(fp.read())[cfg.wandb_keys.name]
 
     # resume from the previous experiment
     if args.resume:

@@ -70,11 +70,11 @@ if __name__ == '__main__':
                                 osp.splitext(osp.basename(args.config))[0])
 
     # re-login wandb if cfg.wandb_keys exists
-    if cfg.wandb_keys:
-        if osp.exists(cfg.wandb_keys.dir):
-            import json
-            with open(cfg.wandb_keys.dir) as fp:
-                os.environ["WANDB_API_KEY"] = json.loads(fp.read())[cfg.wandb_keys.name]
+    # if cfg.wandb_keys:
+    #     if osp.exists(cfg.wandb_keys.dir):
+    #         import json
+    #         with open(cfg.wandb_keys.dir) as fp:
+    #             os.environ["WANDB_API_KEY"] = json.loads(fp.read())[cfg.wandb_keys.name]
 
     # resume from the previous experiment
     assert osp.isdir(args.work_dir)

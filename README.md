@@ -4,16 +4,22 @@ A pytorch implenment for Does the Attention Mechanism Act As a Correction Factor
 
 # Directory
 
--   [Requirement](#Requirement)
--   [Installation for MMEngine and MMSegmentation](#Installation-for-MMEngine-and-MMSegmentation)
--   [Datasets](#Datasets)
--   [Training and testing](#Training-and-testing)
--   [Results](#Results)
-    -   [Synapse](#Synapse)
-    -   [ACDC](#ACDC)
--   [Acknowledgement](#Acknowledgement)
--   [Citation](#Citation)
--   [License](#License)
+- [Does the Attention Mechanism Act As a Correction Factor?](#does-the-attention-mechanism-act-as-a-correction-factor)
+- [Directory](#directory)
+- [Requirement](#requirement)
+  - [MMEngine and MMSegmentation](#mmengine-and-mmsegmentation)
+  - [Other required package](#other-required-package)
+- [Datasets](#datasets)
+  - [Training and testing](#training-and-testing)
+- [Results](#results)
+    - [ImageNet1K](#imagenet1k)
+    - [COCO2018](#coco2018)
+    - [Cityscapes](#cityscapes)
+    - [Synapse](#synapse)
+    - [ACDC](#acdc)
+- [Acknowledgement](#acknowledgement)
+- [Citation](#citation)
+- [License](#license)
 
 # Requirement
 ## MMEngine and MMSegmentation
@@ -21,17 +27,17 @@ This repo is required the MMEngine and MMSegmentation:
 
 -   Pytorch >= 1.12.0
 -   MMEngine >= 0.7.0
--   MMSegmentation >= 1.0.0rc6
+-   MMSegmentation >= 1.0.0
 
 You can run the following scripts to install MMEngine and MMSegmentation.
 
 ```pycon
 pip install -U openmim
 mim install mmengine>=0.7.0
-mim install mmsegmentation>=1.0.0rc6
+mim install mmsegmentation>=1.0.0
 ```
 
-## Other required package:
+## Other required package
 - SimpleITK
 - nibabel
 - WandB
@@ -53,16 +59,43 @@ Or email us to get our proprcessed data.
 -   Training on one GPU:
 
 ```pycon
-python ./train.py {config}
+python train.py {config}
 ```
 
 -   Testing on one GPU:
 
 ```pycon
-python ./test.py {config}
+python test.py {config}
 ```
 {config} means the config path. The config path can be found in [configs](configs "configs").
 # Results
+
+### ImageNet1K
+
+| **Method** | **Parameters** | **FLOPS** | **Train FPS** | **top1**  | **top5** | **config**    |
+| :--------- | :------------: | :-------: | :-----------: | :-------: | :------: | :------: |
+| ResNet50   | 25.557M        | 4.109G    | 1677.51       | 76.48     | 93.17    |[conifg](new_configs/resnet/resnet50_in1k.py)|
+| FcaNet50   | 30.121M        | 4.112G    | 1036.70       | 77.50     | 93.79    |[conifg](new_configs/fcanet/fcanet50_1xb2_in1k.py)|
+| DSNet50-A  | 27.369M        | 4.357G    | 1873.95       | 76.51     | 93.12    |[config](new_configs/dsnet/r50_ex_a_in1k.py)|
+| DSNet50-B  | 29.106M        | 4.208G    | 1424.30       | 77.28     | 93.60    |[config](new_configs/dsnet/r50_ex_b_in1k.py)|
+
+### COCO2018
+
+| **Model**   | **Method** | **Parameters** | **FLOPS** | Train FPS | $AP$ | $AP_{50}$ | $AP_{75}$ | $AP_{S}$ | $AP_{M}$ | $AP_{L}$ |**config**    |
+| :---------- | :--------: | :------------: | :-------: | :-------: | :----: | :-------: | :-------: | :------: | :------: | :------: |:------: |
+| Faster-RCNN | ResNet50   | 41.750M        | 187.20G   | 46.75     | 37.4   | 58.3      | 40.5      | 21.9     | 40.7     | 48.1     |[conifg](new_configs/resnet/faster_rcnn_r50_fpn_1x_coco.py)|
+| Faster-RCNN | FcaNet50   | 44.268M        | 187.31G   | 28.90     | 38.9   | 60.2      | 42.4      | 23.1     | 42.5     | 49.9     |[conifg](new_configs/fcanet/faster_rcnn_fcanet50_fpn_1x_coco.py)|
+| Faster-RCNN | DSNet50-A  | 45.302M        | 188.97G   | 44.95     | 37.8   | 59.4      | 40.8      | 23       | 41.6     | 48.1     |[conifg](new_configs/dsnet/faster_rcnn_r50_ex_a_fpn_1x_coco.py)|
+| Faster-RCNN | DSNet50-B  | 43.565M        | 194.27G   | 64.89 | 38.2   | 59.6      | 41.5      | 22.8     | 42.1     | 48.5     |[conifg](new_configs/dsnet/faster_rcnn_r50_ex_b_fpn_1x_coco.py)|
+
+
+### Cityscapes
+
+| **Decoder** | **Method**       |  **Parameters** | **FLOPS** | **Train FPS** | **mIoU**      | **mAcc**  | **aAcc**  |**config**    |
+| :---------- | :--------------: |  :------------: | :-------: | :-----------: | :-----------: | :-------: | :-------: |:-------: |
+| FCN         | ResNet50 V1C     |  47.13M         | 395.76G   | 45.6          | 75.51         | 83.19     | 95.89     |[conifg](new_configs/resnet/faster_rcnn_r50_fpn_1x_coco.py)|
+| FCN         | FcaNet50         |  49.65M         | 395.91G   | 69.76         | 76.45         | 83.38     | 95.93     |[conifg](new_configs/fcanet/fcn_r50_fca_40k_cityscapes.py)|
+| FCN         | DSNet50-A        |  50.68M         | 411.91G   | 70.96         | 77.25     | 84.48 | 96.83 |[conifg](new_configs/dsnet/fcn_r50_ex_a_40k_cityscapes.py)|
 
 ### Synapse
 

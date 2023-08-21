@@ -1,4 +1,16 @@
 -r requirements/optional.txt
 -r requirements/runtime.txt
-SimpleITK
-wandb
+SimpleITK~=2.2.1
+wandb~=0.14.2
+
+mmcv~=2.0.1
+torch~=1.12.0
+mmengine~=0.8.4
+Pillow~=9.4.0
+einops~=0.6.1
+timm~=0.6.13
+mmpretrain~=1.0.2
+opencv-python~=4.7.0.72
+MedPy~=0.4.0
+mmdet~=3.1.0
+setuptools~=60.2.0

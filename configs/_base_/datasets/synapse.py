@@ -41,4 +41,5 @@ test_dataloader = val_dataloader
 
 val_evaluator = dict(type='IoUMetric', iou_metrics=['mDice'])
 # test_evaluator = val_evaluator
+# test_evaluator = [dict(type='IoUMetric', iou_metrics=['mDice', 'mIoU'])]
 test_evaluator = dict(type='CaseMetric', iou_metrics=['mDice'], hd_metric=True, ignore_index=0)
