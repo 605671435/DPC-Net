@@ -22,6 +22,7 @@ from seg.registry import MODELS
 from mmseg.structures import SegDataSample
 from mmseg.utils import ConfigType, SampleList, get_classes, get_palette
 from seg.visualization import SegLocalVisualizer
+from mmseg.visualization import SegLocalVisualizer as MMSegLocalVisualizer
 
 InputType = Union[str, np.ndarray]
 InputsType = Union[InputType, Sequence[InputType]]
@@ -85,7 +86,7 @@ class MMSegInferencer(BaseInferencer):
         if device == 'cpu' or not torch.cuda.is_available():
             self.model = revert_sync_batchnorm(self.model)
 
-        assert isinstance(self.visualizer, SegLocalVisualizer)
+        assert isinstance(self.visualizer, SegLocalVisualizer) or isinstance(self.visualizer, MMSegLocalVisualizer)
         self.visualizer.set_dataset_meta(palette, classes, dataset_name)
 
     def _init_model(
@@ -396,6 +397,7 @@ class MMSegInferencer(BaseInferencer):
                 ...
         """
         pipeline_cfg = cfg.test_dataloader.dataset.pipeline
+        from mmpretrain.datasets import remove_transform
         # Loading annotations is also not applicable
         idx = self._get_transform_idx(pipeline_cfg, 'LoadAnnotations')
         if idx != -1:
@@ -414,7 +416,20 @@ class MMSegInferencer(BaseInferencer):
 
         If the transform is not found, returns -1.
         """
+        # for i, transform in enumerate(pipeline_cfg):
+        #     if transform['type'] == name:
+        #         return i
+        # return -1
         for i, transform in enumerate(pipeline_cfg):
-            if transform['type'] == name:
-                return i
+            if isinstance(transform, dict):
+                if isinstance(transform['type'], type):
+                    if transform['type'].__name__ == name:
+                        return i
+                else:
+                    if transform['type'] == name:
+                        return i
+            else:
+                if transform.__class__.__name__ == name:
+                    return i
+
         return -1

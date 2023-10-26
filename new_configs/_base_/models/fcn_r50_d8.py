@@ -1,13 +1,17 @@
 # import modules
-from torch.nn import SyncBatchNorm
+from torch.nn import SyncBatchNorm, InstanceNorm2d, LeakyReLU, ReLU
 from mmseg.models import SegDataPreProcessor
 from seg.models.segmentors import EncoderDecoder
 from seg.models.backbones import ResNetV1c
 from seg.models.decode_heads import FCNHead
 from mmseg.models.losses import CrossEntropyLoss, DiceLoss
+from seg.models.losses.dice import MemoryEfficientSoftDiceLoss
 from mmengine.model.weight_init import PretrainedInit
 # model settings
 norm_cfg = dict(type=SyncBatchNorm, requires_grad=True)
+act_cfg = dict(type=ReLU)
+# norm_cfg = dict(type=InstanceNorm2d, requires_grad=True)
+# act_cfg = dict(type=LeakyReLU)
 data_preprocessor = dict(
     type=SegDataPreProcessor,
     mean=None,
@@ -25,6 +29,7 @@ model = dict(
         type=ResNetV1c,
         depth=50,
         num_stages=4,
+        in_channels=1,
         out_indices=(0, 1, 2, 3),
         dilations=(1, 1, 2, 4),
         strides=(1, 2, 1, 1),
@@ -32,8 +37,9 @@ model = dict(
         norm_eval=False,
         style='pytorch',
         contract_dilation=True,
-        init_cfg=dict(
-            type=PretrainedInit, checkpoint='open-mmlab://resnet50_v1c')),
+        # init_cfg=dict(
+        #     type=PretrainedInit, checkpoint='open-mmlab://resnet50_v1c')
+    ),
     decode_head=dict(
         type=FCNHead,
         in_channels=2048,
@@ -44,13 +50,14 @@ model = dict(
         dropout_ratio=0.1,
         num_classes=19,
         norm_cfg=norm_cfg,
+        act_cfg=act_cfg,
         resize_mode='bilinear',
         align_corners=False,
         loss_decode=[
             dict(
-                type=CrossEntropyLoss, use_sigmoid=False, loss_weight=1.2),
+                type=CrossEntropyLoss, use_sigmoid=False, loss_weight=1.0),
             dict(
-                type=DiceLoss, loss_weight=0.8)]),
+                type=MemoryEfficientSoftDiceLoss, loss_weight=1.0)]),
     auxiliary_head=dict(
         type=FCNHead,
         in_channels=1024,
@@ -61,13 +68,14 @@ model = dict(
         dropout_ratio=0.1,
         num_classes=19,
         norm_cfg=norm_cfg,
+        act_cfg=act_cfg,
         resize_mode='bilinear',
         align_corners=False,
         loss_decode=[
             dict(
                 type=CrossEntropyLoss, use_sigmoid=False, loss_weight=0.5),
             dict(
-                type=DiceLoss, loss_weight=0.3)]),
+                type=MemoryEfficientSoftDiceLoss, loss_weight=0.5)]),
     # model training and testing settings
     train_cfg=dict(),
     test_cfg=dict(mode='whole'))

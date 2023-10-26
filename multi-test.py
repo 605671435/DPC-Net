@@ -52,7 +52,6 @@ if __name__ == '__main__':
     # load config
     # register all modules in mmseg into the registries
     # do not init the default scope here because it will be init in the runner
-    register_all_modules(init_default_scope=False)
     os.environ['WANDB_MODE'] = 'offline'
     # load config
     cfg = Config.fromfile(args.config)
@@ -93,3 +92,5 @@ if __name__ == '__main__':
         os.environ['WANDB_MODE'] = 'offline'
         cfg_ = copy.deepcopy(cfg)
         test_single_run(cfg_, num_runs, run, experiment_name)
+        if wandb.run is not None:
+            wandb.join()

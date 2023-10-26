@@ -72,7 +72,7 @@ class ChannelPool(nn.Module):
         return torch.cat( (torch.max(x,1)[0].unsqueeze(1), torch.mean(x,1).unsqueeze(1)), dim=1 )
 
 class SpatialGate(nn.Module):
-    def __init__(self):
+    def __init__(self, in_channels=None):
         super(SpatialGate, self).__init__()
         kernel_size = 7
         self.compress = ChannelPool()
@@ -95,4 +95,17 @@ class CBAM(nn.Module):
         x_out = self.ChannelGate(x)
         if not self.no_spatial:
             x_out = self.SpatialGate(x_out)
+        return x_out
+
+class CBAM_S(nn.Module):
+    def __init__(self, in_channels, reduction_ratio=16, pool_types=['avg', 'max'], no_spatial=False):
+        super(CBAM_S, self).__init__()
+        self.ChannelGate = ChannelGate(in_channels, reduction_ratio, pool_types)
+        self.no_spatial=no_spatial
+        if not no_spatial:
+            self.SpatialGate = SpatialGate()
+    def forward(self, x):
+        c_out = self.ChannelGate(x)
+        s_out = self.SpatialGate(x)
+        x_out = c_out + s_out
         return x_out

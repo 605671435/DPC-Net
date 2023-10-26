@@ -2,8 +2,7 @@ from torch.optim import SGD
 from mmengine.optim import OptimWrapper
 from mmengine.optim.scheduler import PolyLR
 from mmengine.runner.loops import IterBasedTrainLoop
-# from seg.engine.runner.loops import ValLoop, TestLoop
-from mmengine.runner.loops import ValLoop, TestLoop
+from seg.engine.runner.loops import ValLoop, TestLoop
 from mmengine.hooks import IterTimerHook, LoggerHook, ParamSchedulerHook, DistSamplerSeedHook
 from mmseg.engine.hooks import SegVisualizationHook
 from seg.engine.hooks import MyCheckpointHook

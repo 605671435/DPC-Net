@@ -8,6 +8,7 @@ from mmengine import Config, DictAction
 from mmengine.logging import MMLogger
 from mmengine.model import revert_sync_batchnorm
 from mmengine.registry import init_default_scope
+from mmengine.analysis.complexity_analysis import parameter_count, FlopAnalyzer
 
 from mmseg.models import BaseSegmentor
 from mmseg.registry import MODELS
@@ -28,8 +29,13 @@ def parse_args():
         '--shape',
         type=int,
         nargs='+',
-        default=[512, 512],
+        default=[1, 512, 512],
         help='input image size')
+    parser.add_argument(
+        '--target-layers',
+        type=str,
+        default=None,
+        help='Target layers to calculate')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
@@ -58,44 +64,87 @@ def inference(args: argparse.Namespace, logger: MMLogger) -> dict:
 
     init_default_scope(cfg.get('scope', 'seg'))
 
-    if len(args.shape) == 1:
-        input_shape = (3, args.shape[0], args.shape[0])
-    elif len(args.shape) == 2:
-        input_shape = (3, ) + tuple(args.shape)
-    else:
-        raise ValueError('invalid input shape')
+    assert len(args.shape) == 3, 'invalid input shape'
+    input_shape = tuple(args.shape)
+
     result = {}
 
     model: BaseSegmentor = MODELS.build(cfg.model)
     if hasattr(model, 'auxiliary_head'):
-        model.auxiliary_head = None
+        model.auxiliary_head = torch.nn.Identity()
+    # model.decode_head = torch.nn.Identity()
+    # model.neck = torch.nn.Identity()
     if torch.cuda.is_available():
         model.cuda()
     model = revert_sync_batchnorm(model)
     result['ori_shape'] = input_shape[-2:]
     result['pad_shape'] = input_shape[-2:]
-    data_batch = {
-        'inputs': [torch.rand(input_shape)],
-        'data_samples': [SegDataSample(metainfo=result)]
-    }
-    data = model.data_preprocessor(data_batch)
+    # data_batch = {
+    #     'inputs': [torch.rand(input_shape)],
+    #     'data_samples': [SegDataSample(metainfo=result)]
+    # }
+    # data = model.data_preprocessor(data_batch)
     model.eval()
-    if cfg.model.decode_head.type in ['MaskFormerHead', 'Mask2FormerHead']:
-        # TODO: Support MaskFormer and Mask2Former
-        raise NotImplementedError('MaskFormer and Mask2Former are not '
-                                  'supported yet.')
-    outputs = get_model_complexity_info(
-        model,
-        input_shape,
-        inputs=data['inputs'],
-        show_table=True,
-        show_arch=False)
-    result['flops'] = _format_size(outputs['flops'])
-    result['params'] = _format_size(outputs['params'])
+
+    # outputs = get_model_complexity_info(
+    #     model,
+    #     input_shape,
+    #     # inputs=data['inputs'],
+    #     show_table=True,
+    #     show_arch=True)
+    params = dict(parameter_count(model))
+    inputs = (torch.randn(1, *input_shape).to(next(model.parameters()).device),)
+    flop_handler = FlopAnalyzer(model, inputs)
+    flops = flop_handler.by_module()
+    target_params = 0
+    target_flops = 0
+    for source in params.keys():
+        if source.endswith(args.target_layers):
+            target_params += params[source]
+    for source in flops.keys():
+        if source.endswith(args.target_layers):
+            target_flops += flops[source]
+    assert target_flops * target_params > 0
+    # result['flops'] = my_format_size(outputs['flops'], f='G')
+    # result['params'] = my_format_size(outputs['params'], f='M')
+    result['flops'] = _format_size(target_flops)
+    result['params'] = _format_size(target_params)
     result['compute_type'] = 'direct: randomly generate a picture'
-    print(outputs['out_table'])
+    # print(outputs['out_table'])
+    # print(outputs['out_arch'])
     return result
 
+def my_format_size(x: int,
+                 sig_figs: int = 3,
+                 hide_zero: bool = False,
+                 f: str = 'G') -> str:
+    """Formats an integer for printing in a table or model representation.
+
+    Expresses the number in terms of 'kilo', 'mega', etc., using
+    'K', 'M', etc. as a suffix.
+
+    Args:
+        x (int): The integer to format.
+        sig_figs (int): The number of significant figures to keep.
+            Defaults to 3.
+        hide_zero (bool): If True, x=0 is replaced with an empty string
+            instead of '0'. Defaults to False.
+
+    Returns:
+        str: The formatted string.
+    """
+    if hide_zero and x == 0:
+        return ''
+
+    def fmt(x: float) -> str:
+        # use fixed point to avoid scientific notation
+        return f'{{:.{sig_figs}f}}'.format(x).rstrip('0').rstrip('.')
+
+    if f == 'G':
+        return fmt(x / 1e9) + 'G'
+    if f == 'M':
+        return fmt(x / 1e6) + 'M'
+    return str(x)
 
 def main():
 

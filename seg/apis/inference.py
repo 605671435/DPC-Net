@@ -49,7 +49,7 @@ def init_model(config: Union[str, Path, Config],
         config.model.backbone.init_cfg = None
     config.model.pretrained = None
     config.model.train_cfg = None
-    init_default_scope(config.get('default_scope', 'mmseg'))
+    # init_default_scope(config.get('default_scope', 'mmseg'))
 
     model = MODELS.build(config.model)
     if checkpoint is not None:

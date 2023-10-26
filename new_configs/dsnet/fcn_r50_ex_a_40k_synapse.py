@@ -3,7 +3,6 @@ from seg.models.utils import DSA
 
 
 with read_base():
-    # from .._base_.default_runtime import *  # noqa
     from ..resnet.fcn_r50_d8_40k_synapse import * # noqa
 
 model.update(dict(
@@ -25,6 +24,3 @@ vis_backends = [
 ]
 visualizer = dict(
     type=SegLocalVisualizer, vis_backends=vis_backends, name='visualizer')
-
-# optimizer = dict(type='SGD', lr=0.05, momentum=0.9, weight_decay=0.0005)
-# optim_wrapper = dict(type='OptimWrapper', optimizer=optimizer, clip_grad=None)

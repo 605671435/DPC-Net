@@ -5,20 +5,43 @@ import time
 import copy
 import os
 import os.path as osp
+from typing import Optional
 
 from mmengine.config import Config, DictAction
 from mmengine.fileio import load
-from seg.utils.train_single_fold import train_single_run, RUN_INFO_FILE
+from seg.utils.train_single_fold import train_single_run, test_single_run
 from mmengine.logging import print_log
 from seg.utils import register_all_modules
 import wandb
+
+
+def find_latest_run(path: str) -> Optional[str]:
+    """Find the latest run from the given path.
+
+    Refer to https://github.com/facebookresearch/fvcore/blob/main/fvcore/common/checkpoint.py  # noqa: E501
+
+    Args:
+        path(str): The path to find run.
+
+    Returns:
+        str or None: File path of the latest run.
+    """
+    save_file = osp.join(path, 'last_run')
+    last_saved: Optional[str]
+    if os.path.exists(save_file):
+        with open(save_file) as f:
+            last_saved = f.read().strip()
+    else:
+        print_log('Did not find last_run to be resumed.', level=logging.WARNING)
+        last_saved = None
+    return last_saved
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a segmentor')
     parser.add_argument('config', help='train config file path')
     parser.add_argument(
         '--num-runs',
-        default=2,
+        default=3,
         type=int,
         help='The number of all runs.')
     parser.add_argument('--work-dir', help='the dir to save logs and models')
@@ -27,6 +50,11 @@ def parse_args():
         action='store_true',
         default=False,
         help='resume from the latest checkpoint in the work_dir automatically')
+    parser.add_argument(
+        '--test',
+        action='store_true',
+        default=False,
+        help='whether test when training')
     parser.add_argument(
         '--amp',
         action='store_true',
@@ -105,8 +133,10 @@ if __name__ == '__main__':
         assert osp.isdir(args.work_dir)
         experiment_name = osp.basename(args.work_dir)
         cfg.work_dir = args.work_dir
-        last_run = os.listdir(args.work_dir)[-1][-1]
-        resume_run = int(last_run)
+        last_run = find_latest_run(args.work_dir)
+        # last_run = os.listdir(args.work_dir)[-1][-1]
+        resume_run = int(last_run[-1])
+        print_log(f'Resume from last run {resume_run}', logger='current', level=logging.INFO)
     else:
         timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime(time.time()))
         experiment_name = f'{args.num_runs}-run_{timestamp}'
@@ -122,9 +152,22 @@ if __name__ == '__main__':
         # cfg.train_cfg.val_interval = 50
         cfg_ = copy.deepcopy(cfg)
         train_single_run(cfg_, args.num_runs, run, experiment_name, resume)
+        if args.test:
+            cfg_ = copy.deepcopy(cfg)
+            test_single_run(cfg_, args.num_runs, run, experiment_name)
         resume = False
         if wandb.run is not None:
             wandb.join()
+
+    if not args.test:
+        print_log(
+            'Multi runs have finished, you can test all of your runs by running:',
+            logger='current',
+            level=logging.INFO)
+        print_log(
+            f'python multi-test.py {args.config} {cfg.work_dir}',
+            logger='current',
+            level=logging.INFO)
 
 
 

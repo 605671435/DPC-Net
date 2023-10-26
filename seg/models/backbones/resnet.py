@@ -1,14 +1,19 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import warnings
-
+import inspect
+import platform
+from typing import Dict, Tuple, Union
+import torch
 import torch.nn as nn
 import torch.utils.checkpoint as cp
 from mmcv.cnn import build_conv_layer, build_norm_layer, build_plugin_layer
+from mmcv.cnn.bricks.plugin import infer_abbr
 from mmengine.model import BaseModule
 from mmengine.utils.dl_utils.parrots_wrapper import _BatchNorm
-
+from ..utils import *  # noqa: F401,F403
 from seg.registry import MODELS
 from mmseg.models.utils import ResLayer
+
 
 class BasicBlock(BaseModule):
     """Basic block for ResNet."""
@@ -34,7 +39,7 @@ class BasicBlock(BaseModule):
 
         assert plugins is None or isinstance(plugins, list)
         if plugins is not None:
-            allowed_position = ['after_conv1', 'after_conv2']
+            allowed_position = ['after_conv1', 'after_conv2', 'after_res']
             assert all(p['position'] in allowed_position for p in plugins)
 
         self.plugins = plugins
@@ -49,11 +54,17 @@ class BasicBlock(BaseModule):
                 plugin['cfg'] for plugin in plugins
                 if plugin['position'] == 'after_conv2'
             ]
+            self.after_res_plugins = [
+                plugin['cfg'] for plugin in plugins
+                if plugin['position'] == 'after_res'
+            ]
         if self.with_plugins:
             self.after_conv1_plugin_names = self.make_block_plugins(
                 planes, self.after_conv1_plugins)
             self.after_conv2_plugin_names = self.make_block_plugins(
                 planes, self.after_conv2_plugins)
+            self.after_res_plugin_names = self.make_block_plugins(
+                planes, self.after_res_plugins)
 
         self.norm1_name, norm1 = build_norm_layer(norm_cfg, planes, postfix=1)
         self.norm2_name, norm2 = build_norm_layer(norm_cfg, planes, postfix=2)
@@ -142,6 +153,9 @@ class BasicBlock(BaseModule):
 
             out += identity
 
+            if self.with_plugins:
+                out = self.forward_plugin(out, self.after_res_plugin_names)
+
             return out
 
         if self.with_cp and x.requires_grad:
@@ -181,7 +195,7 @@ class Bottleneck(BaseModule):
         assert dcn is None or isinstance(dcn, dict)
         assert plugins is None or isinstance(plugins, list)
         if plugins is not None:
-            allowed_position = ['after_conv1', 'after_conv2', 'after_conv3']
+            allowed_position = ['after_conv1', 'after_conv2', 'after_conv3', 'after_res']
             assert all(p['position'] in allowed_position for p in plugins)
 
         self.inplanes = inplanes
@@ -210,6 +224,10 @@ class Bottleneck(BaseModule):
             self.after_conv3_plugins = [
                 plugin['cfg'] for plugin in plugins
                 if plugin['position'] == 'after_conv3'
+            ]
+            self.after_res_plugins = [
+                plugin['cfg'] for plugin in plugins
+                if plugin['position'] == 'after_res'
             ]
 
         if self.style == 'pytorch':
@@ -276,6 +294,8 @@ class Bottleneck(BaseModule):
                 planes, self.after_conv2_plugins)
             self.after_conv3_plugin_names = self.make_block_plugins(
                 planes * self.expansion, self.after_conv3_plugins)
+            self.after_res_plugin_names = self.make_block_plugins(
+                planes * self.expansion, self.after_res_plugins)
 
     def make_block_plugins(self, in_channels, plugins):
         """make plugins for block.
@@ -361,6 +381,9 @@ class Bottleneck(BaseModule):
             out = _inner_forward(x)
 
         out = self.relu(out)
+
+        if self.with_plugins:
+            out = self.forward_plugin(out, self.after_res_plugin_names)
 
         return out
 
@@ -470,6 +493,7 @@ class ResNet(BaseModule):
                  dcn=None,
                  stage_with_dcn=(False, False, False, False),
                  plugins=None,
+                 final_plugins=None,
                  multi_grid=None,
                  contract_dilation=False,
                  with_cp=False,
@@ -557,7 +581,7 @@ class ResNet(BaseModule):
             # multi grid is applied to last layer only
             stage_multi_grid = multi_grid if i == len(
                 self.stage_blocks) - 1 else None
-            planes = base_channels * 2**i
+            planes = base_channels * 2 ** i
             res_layer = self.make_res_layer(
                 block=self.block,
                 inplanes=self.inplanes,
@@ -576,14 +600,17 @@ class ResNet(BaseModule):
                 contract_dilation=contract_dilation,
                 init_cfg=block_init_cfg)
             self.inplanes = planes * self.block.expansion
-            layer_name = f'layer{i+1}'
+            if final_plugins is not None and i == len(self.stage_blocks) - 1:
+                final_plugins_name, final_plugins_layer = build_plugin_layer(final_plugins, in_channels=self.inplanes)
+                res_layer.add_module(final_plugins_name, final_plugins_layer)
+            layer_name = f'layer{i + 1}'
             self.add_module(layer_name, res_layer)
             self.res_layers.append(layer_name)
 
         self._freeze_stages()
 
-        self.feat_dim = self.block.expansion * base_channels * 2**(
-            len(self.stage_blocks) - 1)
+        self.feat_dim = self.block.expansion * base_channels * 2 ** (
+                len(self.stage_blocks) - 1)
 
     def make_stage_plugins(self, plugins, stage_idx):
         """make plugins for ResNet 'stage_idx'th stage .
@@ -699,6 +726,7 @@ class ResNet(BaseModule):
             self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         else:
             self.maxpool = nn.MaxPool3d(kernel_size=3, stride=2, padding=1)
+
     def _freeze_stages(self):
         """Freeze stages param and norm stats."""
         if self.frozen_stages >= 0:

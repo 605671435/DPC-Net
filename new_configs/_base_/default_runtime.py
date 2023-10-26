@@ -21,6 +21,6 @@ log_level = 'INFO'
 load_from = None
 resume = False
 
-randomness = dict(seed=50000000,
-                  deterministic=False,
-                  diff_rank_seed=False)
+# randomness = dict(seed=50000000,
+#                   deterministic=False,
+#                   diff_rank_seed=False)

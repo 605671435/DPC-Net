@@ -132,6 +132,9 @@ class IoUMetric(BaseMetric):
             total_area_intersect, total_area_union, total_area_pred_label,
             total_area_label, self.metrics, self.nan_to_num, self.beta)
 
+        for k, v in ret_metrics.items():
+            ret_metrics[k] = v[1:] if v.size > 1 else v
+        class_names = class_names[1:]
         # summary table
         ret_metrics_summary = OrderedDict({
             ret_metric: np.round(np.nanmean(ret_metric_value) * 100, 2)

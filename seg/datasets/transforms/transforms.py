@@ -211,8 +211,13 @@ class Normalize(BaseTransform):
     """
 
     def __init__(self,
+                 grayscale: bool = False,
                  to_rgb: bool = True) -> None:
-        self.to_rgb = to_rgb
+        self.grayscale = grayscale
+        if grayscale:
+            self.to_rgb = False
+        else:
+            self.to_rgb = to_rgb
 
     def transform(self, results: dict) -> dict:
         """Function to normalize images.
@@ -225,9 +230,13 @@ class Normalize(BaseTransform):
             result dict.
         """
         img = results['img']
-        mean = [img[..., i].mean() for i in range(img.shape[-1])]
+        if self.grayscale:
+            mean = img.mean()
+            std = img.std()
+        else:
+            mean = [img[..., i].mean() for i in range(img.shape[-1])]
+            std = [img[..., i].std() for i in range(img.shape[-1])]
         mean = np.array(mean, dtype=np.float32)
-        std = [img[..., i].std() for i in range(img.shape[-1])]
         std = np.array(std, dtype=np.float32)
         results['img'] = mmcv.imnormalize(img, mean, std,
                                           self.to_rgb)
