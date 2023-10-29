@@ -18,6 +18,10 @@ A pytorch implenment for Decoupled Pixel-wise Correlation for Abdominal CT Multi
 - [Citation](#citation)
 - [License](#license)
 
+# Overview of our DPC-Net
+
+![DPC-Net](overview.png)
+
 # Requirement
 - Pytorch >= 1.12.0
 - MMCV
