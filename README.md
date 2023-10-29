@@ -1,48 +1,38 @@
-# Does the Attention Mechanism Act As a Correction Factor?
+# Decoupled Pixel-wise Correlation for Abdominal CT Multi-organ Segmentation
 
-A pytorch implenment for Does the Attention Mechanism Act As a Correction Factor?
+A pytorch implenment for Decoupled Pixel-wise Correlation for Abdominal CT Multi-organ Segmentation
 
 # Directory
 
-- [Does the Attention Mechanism Act As a Correction Factor?](#does-the-attention-mechanism-act-as-a-correction-factor)
-- [Directory](#directory)
 - [Requirement](#requirement)
-  - [MMEngine and MMSegmentation](#mmengine-and-mmsegmentation)
+  - [MMEngine and MMSegmentation](#mmcv)
   - [Other required package](#other-required-package)
 - [Datasets](#datasets)
-  - [Training and testing](#training-and-testing)
+  - [Synapse](#synapse)
+  - [FLARE22](#flare22)
+- [Training and testing](#training-and-testing)
 - [Results](#results)
-    - [ImageNet1K](#imagenet1k)
-    - [COCO2018](#coco2018)
-    - [Cityscapes](#cityscapes)
-    - [Synapse](#synapse)
-    - [ACDC](#acdc)
+    - [Synapse](#results-on-synapse)
+    - [FLARE22](#results-on-flare22)
 - [Acknowledgement](#acknowledgement)
 - [Citation](#citation)
 - [License](#license)
 
 # Requirement
-## MMEngine and MMSegmentation
-This repo is required the MMEngine and MMSegmentation:
-
--   Pytorch >= 1.12.0
--   MMEngine >= 0.7.0
--   MMSegmentation >= 1.0.0
-
-You can run the following scripts to install MMEngine and MMSegmentation.
+- Pytorch >= 1.12.0
+- MMCV
+## MMCV
+This repo is required the MMCV, it can be simply install by:
 
 ```pycon
 pip install -U openmim
-mim install mmengine>=0.7.0
-mim install mmsegmentation>=1.0.0
+mim install mmcv
 ```
 
 ## Other required package
-- SimpleITK
-- nibabel
-- WandB
+We have a lot of required package listed in [here](requirements.txt).
 
-You can run the following script to install requirement package:
+You can simply run the following script to install the required package:
 
 ```pycon
 pip install -r requirements.txt
@@ -50,11 +40,14 @@ pip install -r requirements.txt
 
 # Datasets
 
-You counld get Synapse raw data from [https://www.synapse.org/#!Synapse:syn3193805/wiki/217752](https://www.synapse.org/#!Synapse:syn3193805/wiki/217752 "https://www.synapse.org/#!Synapse:syn3193805/wiki/217752").
+## Synapse
 
-Or email us to get our proprcessed data.
+You counld get Synapse raw data from [here](https://www.synapse.org/#!Synapse:syn3193805/wiki/217752 "https://www.synapse.org/#!Synapse:syn3193805/wiki/217752").
 
-## Training and testing
+## FLARE22
+You counld get FLARE22 raw data from [here](https://flare22.grand-challenge.org).
+
+# Training and testing
 
 -   Training on one GPU:
 
@@ -67,81 +60,48 @@ python train.py {config}
 ```pycon
 python test.py {config}
 ```
-{config} means the config path. The config path can be found in [configs](configs "configs").
+{config} means the config path. The config path can be found in [configs](new_configs "new_configs"),
+or you can find them in the last column of the following tables.
 # Results
 
-### ImageNet1K
+## Results on Synapse
 
-| **Method** | **Parameters** | **FLOPS** | **Train FPS** | **top1**  | **top5** | **config**    |
-| :--------- | :------------: | :-------: | :-----------: | :-------: | :------: | :------: |
-| ResNet50   | 25.557M        | 4.109G    | 1677.51       | 76.48     | 93.17    |[conifg](new_configs/resnet/resnet50_in1k.py)|
-| FcaNet50   | 30.121M        | 4.112G    | 1036.70       | 77.50     | 93.79    |[conifg](new_configs/fcanet/fcanet50_1xb2_in1k.py)|
-| DSNet50-A  | 27.369M        | 4.357G    | 1873.95       | 76.51     | 93.12    |[config](new_configs/dsnet/r50_ex_a_in1k.py)|
-| DSNet50-B  | 29.106M        | 4.208G    | 1424.30       | 77.28     | 93.60    |[config](new_configs/dsnet/r50_ex_b_in1k.py)|
+| Method              | DSC(%)         | JC (%)         | HD (mm)        | Iteration time (ms) | FLOPs&#xA;&#xA;(G) | Params&#xA;&#xA;(M) | Config |
+| ------------------- | -------------- | -------------- | -------------- | ----------------------- | ------------------ | ------------------- | ------ |
+| UNet-R18            | 73.46±0.41     | 62.80±0.35     | 54.60±4.07     | 64.1                    | 61.116             | 13.694              | [config](new_configs/unet/unet_r18v1c_d8_40k_synapse.py)      |
+| Att-UNet            | 75.37±1.46     | 65.29±1.66     | 48.17±4.22     | 77.8                    | 64.964             | 15.076              | [config](new_configs/attn_unet/attn_ma_unet_r18v1c_synapse_40k.py)|
+| Swin-UNETR          | 76.03±0.71     | 66.05±0.87     | 45.92±3.36     | 265.9                   | 71.535             | 25.138              | [config](new_configs/medical_seg/swin_unetr_base_40k_synapse.py)      |
+| MISSFormer          | 77.39±0.73     | 67.48±0.84     | 40.12±3.15     | 374.9                   | 58.155             | 42.463              | [config](new_configs/medical_seg/missformer_40k_synapse.py)      |
+| ConvNeXt            | 73.66±0.64     | 63.28±0.94     | 49.34±6.37     | 169.9                   | 113.486            | 98.145              | [config](new_configs/convnext/nopretrained_unet_conv_next_b_synapse_40k.py)      |
+| SegNeXt             | 74.04±1.13     | 63.48±1.32     | 41.40±4.41     | 250.0                   | 33.831             | 28.854              | [config](new_configs/segnext/nopretrain_unet_segnext_b_40k_synapse.py)      |
+| MedNeXt             | 77.05±0.35     | 67.18±0.41     | 38.46±4.49     | 244.9                   | 54.019             | 10.448              | [config](new_configs/medical_seg/mednext_40k_synapse.py)      |
+| Ham-UNet            | 76.90±0.75     | 67.39±0.93     | 44.32±6.55     | 83.4                    | 66.925             | 14.908              | [config](new_configs/hamnet/unet_r18v1c_hamnet_40k_synapse.py)      |
+| **DPCA-Net (ours)** | 77.50±0.30     | 67.82±0.47     | 40.52±4.65     | 68.0                    | 66.030             | 14.974              | [config](new_configs/dsnet/unet_r18v1c_dsnet_v14_dam_40k_synapse.py)      |
+| **DPCS-Net (ours)** | **77.98±0.71** | **68.33±0.86** | **36.35±5.82** | 67.9                    | 65.963             | 14.991              | [config](new_configs/dsnet/unet_r18v1c_dsnet_v14_40k_synapse.py)      |
 
-### COCO2018
+## Results on FLARE22
 
-| **Model**   | **Method** | **Parameters** | **FLOPS** | Train FPS | $AP$ | $AP_{50}$ | $AP_{75}$ | $AP_{S}$ | $AP_{M}$ | $AP_{L}$ |**config**    |
-| :---------- | :--------: | :------------: | :-------: | :-------: | :----: | :-------: | :-------: | :------: | :------: | :------: |:------: |
-| Faster-RCNN | ResNet50   | 41.750M        | 187.20G   | 46.75     | 37.4   | 58.3      | 40.5      | 21.9     | 40.7     | 48.1     |[conifg](new_configs/resnet/faster_rcnn_r50_fpn_1x_coco.py)|
-| Faster-RCNN | FcaNet50   | 44.268M        | 187.31G   | 28.90     | 38.9   | 60.2      | 42.4      | 23.1     | 42.5     | 49.9     |[conifg](new_configs/fcanet/faster_rcnn_fcanet50_fpn_1x_coco.py)|
-| Faster-RCNN | DSNet50-A  | 45.302M        | 188.97G   | 44.95     | 37.8   | 59.4      | 40.8      | 23       | 41.6     | 48.1     |[conifg](new_configs/dsnet/faster_rcnn_r50_ex_a_fpn_1x_coco.py)|
-| Faster-RCNN | DSNet50-B  | 43.565M        | 194.27G   | 64.89 | 38.2   | 59.6      | 41.5      | 22.8     | 42.1     | 48.5     |[conifg](new_configs/dsnet/faster_rcnn_r50_ex_b_fpn_1x_coco.py)|
-
-
-### Cityscapes
-
-| **Decoder** | **Method**       |  **Parameters** | **FLOPS** | **Train FPS** | **mIoU**      | **mAcc**  | **aAcc**  |**config**    |
-| :---------- | :--------------: |  :------------: | :-------: | :-----------: | :-----------: | :-------: | :-------: |:-------: |
-| FCN         | ResNet50 V1C     |  47.13M         | 395.76G   | 45.6          | 75.51         | 83.19     | 95.89     |[conifg](new_configs/resnet/faster_rcnn_r50_fpn_1x_coco.py)|
-| FCN         | FcaNet50         |  49.65M         | 395.91G   | 69.76         | 76.45         | 83.38     | 95.93     |[conifg](new_configs/fcanet/fcn_r50_fca_40k_cityscapes.py)|
-| FCN         | DSNet50-A        |  50.68M         | 411.91G   | 70.96         | 77.25     | 84.48 | 96.83 |[conifg](new_configs/dsnet/fcn_r50_ex_a_40k_cityscapes.py)|
-
-### Synapse
-
-| Method                     | Backbone   | Crop Size | Lr schd | mDice ↑    | mHD95 ↓    | Config                                                                           |
-| -------------------------- | ---------- | --------- | ------- | ---------- | ---------- | -------------------------------------------------------------------------------- |
-| FCN                        | ResNet50   | 512x512   | 40000   | 81.86±0.68 | 26.57±5.22 | [config](configs/resnet/fcn_r50-d8_1xb2-40k_synapse-512x512.py "config")         |
-| FCN+SE                     | ResNet50   | 512x512   | 40000   | 82.47±0.69 | 24.87±3.69 | [config](configs/se/fcn_r50-se-d8_1xb2-40k_synapse-512x512.py "config")          |
-| FCN+EncNet                 | ResNet50   | 512x512   | 40000   | 82.08±0.26 | 25.00±2.41 | [config](configs/encnet/fcn_r50-encnet-d8_1xb2-40k_synapse-512x512.py "config")  |
-| FCN+ECANet                 | ResNet50   | 512x512   | 40000   | 81.72±0.52 | 23.19±1.70 | [config](configs/ecanet/fcn_r50-ecanet-d8_1xb2-40k_synapse-512x512.py "config")  |
-| FCN+CBAM                   | ResNet50   | 512x512   | 40000   | 81.82±1.01 | 24.38±3.46 | [config](configs/cbam/fcn_r50-cbam-d8_1xb2-40k_synapse-512x512.py "config")      |
-| DANet                      | ResNet50   | 512x512   | 40000   | 82.23±0.67 | 26.24±1.55 | [config](configs/danet/danet_r50-d8_1xb2-40k_synapse-512x512.py "config")        |
-| CCNet                      | ResNet50   | 512x512   | 40000   | 81.51±0.85 | 27.73±4.31 | [config](configs/ccnet/ccnet_r50-d8_1xb2-40k_synapse-512x512.py "config")        |
-| GCNet                      | ResNet50   | 512x512   | 40000   | 81.83±0.98 | 25.52±3.38 | [config](configs/gcnet/gcnet_r50-d8_1xb2-40k_synapse-512x512.py "config")        |
-| HamNet                     | ResNet50   | 512x512   | 40000   | 82.37±0.59 | 24.36±1.48 | [config](configs/hamnet/hamnet_r50-d8_1xb2-40k_synapse-512x512.py "config")      |
-| EANet                      | ResNet50   | 512x512   | 40000   | 81.77±0.25 | 27.00±2.50 | [config](configs/eanet/eanet_r50-d8_1xb2-40k_synapse-512x512.py "config")        |
-| FCN+PSA (p)                | ResNet50   | 512x512   | 40000   | 82.66±0.64 | 21.99±0.88 | [config](configs/psa/fcn_r50-psa-d8_1xb2-40k_synapse-512x512.py "config")        |
-| FCN+PSA (s)                | ResNet50   | 512x512   | 40000   | 82.48±0.56 | 22.33±1.79 | [config](configs/psa/fcn_r50-psa_s-d8_1xb2-40k_synapse-512x512.py "config")      |
-| UPerNet                    | ConvNeXt-B | 512x512   | 80000   | 83.24±0.46 | 28.16±3.19 | [config](configs/convnext/conv_next_b-synapse-80k.py "config")                   |
-| UPerNet                    | SegNeXt-B  | 512x512   | 80000   | 83.86±0.38 | 21.98±1.83 | [config](configs/segnext/upernet-segnext-b_1xb2-80k_synapse-512x512.py "config") |
-| HamNet                     | MSCAN-B    | 512x512   | 80000   | 84.72±0.51 | 20.68±3.57 | [config](configs/segnext/upernet-segnext-b_1xb2-80k_synapse-512x512.py "config") |
-| **DSNet (ours)**           | ResNet50   | 512x512   | 40000   | 82.78±0.91 | 22.75±3.39 | [config](configs/dsa/dsnet_r50-d8_1xb2-40k_synapse-512x512.py "config")          |
-| **FCN+DSM (ours)**         | ResNet50   | 512x512   | 40000   | 83.25±0.56 | 20.55±3.56 | [config](configs/dsa/fcn_r50-ex-d8_1xb2-40k_synapse-512x512.py "config")         |
-| **DSNet (ours)** | MSCAN-B    | 512x512   | 80000   | 84.69±0.50 | 18.28±3.55 | [config](configs/segnext/upernet-segnext-b_1xb2-80k_synapse-512x512.py "config") |
-
-### ACDC
-
-| Method             | Backbone | Crop Size | Lr schd | mDice ↑    | Config                                                                       |
-| ------------------ | -------- | --------- | ------- | ---------- | ---------------------------------------------------------------------------- |
-| FCN                | ResNet50 | 256x256   | 40000   | 87.87±0.43 | [config](configs/resnet/fcn_r50-d8_1xb2-40k_acdc-256x256.py "config")        |
-| FCN+SE             | ResNet50 | 256x256   | 40000   | 87.75±0.59 | [config](configs/se/fcn_r50-se-d8_1xb2-40k_acdc-256x256.py "config")         |
-| FCN+EncNet         | ResNet50 | 256x256   | 40000   | 87.63±0.39 | [config](configs/encnet/fcn_r50-encnet-d8_1xb2-40k_acdc-256x256.py "config") |
-| FCN+ECANet         | ResNet50 | 256x256   | 40000   | 87.66±0.43 | [config](configs/ecanet/fcn_r50-ecanet-d8_1xb2-40k_acdc-256x256.py "config") |
-| FCN+CBAM           | ResNet50 | 256x256   | 40000   | 87.39±0.53 | [config](configs/cbam/fcn_r50-cbam-d8_1xb2-40k_acdc-256x256.py "config")     |
-| DANet              | ResNet50 | 256x256   | 40000   | 87.71±0.45 | [config](configs/danet/danet_r50-d8_1xb2-40k_acdc-256x256.py "config")       |
-| CCNet              | ResNet50 | 256x256   | 40000   | 87.52±0.61 | [config](configs/ccnet/ccnet_r50-d8_1xb2-40k_acdc-256x256.py "config")       |
-| GCNet              | ResNet50 | 256x256   | 40000   | 87.81±0.59 | [config](configs/gcnet/gcnet_r50-d8_1xb2-40k_acdc-256x256.py "config")       |
-| HamNet             | ResNet50 | 256x256   | 40000   | 87.73±0.48 | [config](configs/hamnet/hamnet_r50-d8_1xb2-40k_acdc-256x256.py "config")     |
-| EANet              | ResNet50 | 256x256   | 40000   | 87.72±0.39 | [config](configs/eanet/eanet_r50-d8_1xb2-40k_acdc-256x256.py "config")       |
-| FCN+PSA (p)        | ResNet50 | 256x256   | 40000   | 87.45±0.48 | [config](configs/psa/fcn_r50-psa-d8_1xb2-40k_acdc-256x256.py "config")       |
-| FCN+PSA (s)        | ResNet50 | 256x256   | 40000   | 87.92±0.37 | [config](configs/psa/fcn_r50-psa_s-d8_1xb2-40k_acdc-256x256.py "config")     |
-| **DSNet (ours)**   | ResNet50 | 256x256   | 40000   | 87.42±0.38 | [config](configs/dsa/dsnet_r50-d8_1xb2-40k_acdc-512x512.py "config")         |
-| **FCN+DSM (ours)** | ResNet50 | 256x256   | 40000   | 87.97±0.46 | [config](configs/dsa/fcn_r50-ex-d8_1xb2-40k_acdc-256x256.py "config")        |
+| Method              | DSC(%)         | JC (%)         | HD (mm)        | Config |
+| ------------------- | -------------- | -------------- | -------------- | ------ |
+| UNet-R18            | 85.63±0.56     | 76.95±0.81     | 16.16±1.65     | [config](new_configs/unet/unet_r18v1c_d8_40k_flare22.py)      |
+| Att-UNet            | 86.09±0.75     | 77.60±1.00     | 14.04±1.25     | [config](new_configs/attn_unet/attn_ma_unet_r18v1c_flare22_40k.py)      |
+| Swin-UNETR          | 85.72±0.25     | 77.05±0.28     | 17.06±1.86     | [config](new_configs/medical_seg/swin_unetr_base_40k_flare22.py)      |
+| MISSFormer          | 84.88±0.19     | 75.68±0.27     | 15.14±0.55     | [config](new_configs/medical_seg/missformer_40k_flare22.py)      |
+| ConvNeXt            | 84.45±0.43     | 75.20±0.57     | 17.66±2.70     | [config](new_configs/convnext/nopretrained_unet_conv_next_b_flare22_40k.py)      |
+| SegNeXt             | 84.73±0.28     | 75.76±0.35     | 13.18±1.41     | [config](new_configs/segnext/nopretrain_unet_segnext_b_40k_flare22.py)      |
+| MedNeXt             | 86.36±0.38     | 77.90±0.44     | 21.70±1.77     | [config](new_configs/medical_seg/mednext_40k_flare22.py)      |
+| Ham-UNet            | 86.78±0.17     | 78.47±0.23     | 11.34±1.61     | [config](new_configs/hamnet/unet_r18v1c_hamnet_40k_flare22.py)      |
+| **DPCA-Net (ours)** | 86.94±0.20     | 78.69±0.25     | 11.52±0.82     | [config](new_configs/dsnet/unet_r18v1c_dsnet_v14_dam_40k_flare22.py)      |
+| **DPCS-Net (ours)** | **87.04±0.19** | **78.78±0.26** | **10.87±0.74** | [config](new_configs/dsnet/unet_r18v1c_dsnet_v14_40k_synapse.py)      |
 
 # Acknowledgement
 
-Specially thanks to [MMSegmentation](https://github.com/open-mmlab/mmsegmentation "MMSegmentation"), [MMEngine](https://github.com/open-mmlab/mmengine "MMEngine").
+Specially thanks to the following: 
+- [MMSegmentation](https://github.com/open-mmlab/mmsegmentation "MMSegmentation")
+- [MMEngine](https://github.com/open-mmlab/mmengine "MMEngine")
+- [Monai](https://github.com/Project-MONAI)
+- [MedNeXt](https://github.com/MIC-DKFZ/MedNeXt)
+- [MISSFormer](https://github.com/ZhifangDeng/MISSFormer/tree/main)
 
 # Citation
 
