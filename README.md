@@ -5,7 +5,7 @@ A pytorch implenment for Decoupled Pixel-wise Correlation for Abdominal CT Multi
 # Directory
 
 - [Requirement](#requirement)
-  - [MMEngine and MMSegmentation](#mmcv)
+  - [MMCV](#mmcv)
   - [Other required package](#other-required-package)
 - [Datasets](#datasets)
   - [Synapse](#synapse)
