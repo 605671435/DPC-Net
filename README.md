@@ -2,6 +2,10 @@
 
 A pytorch implenment for Decoupled Pixel-wise Correlation for Abdominal CT Multi-organ Segmentation
 
+# Overview of our DPC-Net
+
+![DPC-Net](overview.png)
+
 # Directory
 
 - [Requirement](#requirement)
@@ -17,10 +21,6 @@ A pytorch implenment for Decoupled Pixel-wise Correlation for Abdominal CT Multi
 - [Acknowledgement](#acknowledgement)
 - [Citation](#citation)
 - [License](#license)
-
-# Overview of our DPC-Net
-
-![DPC-Net](overview.png)
 
 # Requirement
 - Pytorch >= 1.12.0
